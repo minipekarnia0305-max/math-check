@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#1F5FAE">
 <title>Math Check</title>
 <link rel="icon" href="logo-192.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="logo-192.png">
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px; box-sizing: border-box;
          background: #F6F7F3; color: #1D2040; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: center; }
@@ -42,7 +44,29 @@ async function go() {
   }
   retry.hidden = false;
 }
-go();
+navigator.serviceWorker?.register("sw.js").catch(() => {});
+
+// Ссылка с ?install не перебрасывает сразу, а предлагает установить значок на главный экран
+if (new URLSearchParams(location.search).has("install")) {
+  s.textContent = "Чтобы Math Check открывался как приложение, установите его на главный экран.";
+  retry.textContent = "Установить Math Check";
+  retry.hidden = false;
+  let prompt = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); prompt = e; });
+  retry.onclick = async () => {
+    if (prompt) {
+      prompt.prompt();
+      await prompt.userChoice;
+      s.textContent = "Готово! Открывайте Math Check значком на главном экране.";
+      retry.hidden = true;
+    } else {
+      s.textContent = "Нажмите ⋮ в правом верхнем углу Chrome и выберите «Добавить на главный экран» или «Установить приложение».";
+    }
+  };
+  addEventListener("appinstalled", () => { s.textContent = "Готово! Открывайте Math Check значком на главном экране."; retry.hidden = true; });
+} else {
+  go();
+}
 </script>
 </body>
 </html>
